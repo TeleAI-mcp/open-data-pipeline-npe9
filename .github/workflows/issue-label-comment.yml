@@ -1,0 +1,31 @@
+name: Issue Label Comment Bot
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Check label and comment
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [[ "${{ github.event.label.name }}" == "bug" ]]; then
+            COMMENT="Thank you for reporting this bug. Our team will investigate and fix it."
+          elif [[ "${{ github.event.label.name }}" == "documentation" ]]; then
+            COMMENT="Thank you for flagging this documentation issue. We will update it soon."
+          elif [[ "${{ github.event.label.name }}" == "enhancement" ]]; then
+            COMMENT="Thanks for the enhancement suggestion! We appreciate your input."
+          else
+            echo "No matching label, skipping."
+            exit 0
+          fi
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments \
+            -d "{\"body\": \"$COMMENT\"}"
